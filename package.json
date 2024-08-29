@@ -1,5 +1,5 @@
 {
-  "name": "infrastack-interview-fs-meu-20240828",
+  "name": "infrastack-interview-fs-meu-20240829",
   "version": "1.0.0",
   "description": "A simple wrapper for OpenTelemetry SDKs",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "opentelemetry",
