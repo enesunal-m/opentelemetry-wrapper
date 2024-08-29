@@ -1,4 +1,16 @@
 import { register } from "../src/index";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+
+// Mock the NodeSDK class
+jest.mock("@opentelemetry/sdk-node", () => {
+  return {
+    NodeSDK: jest.fn().mockImplementation(() => {
+      return {
+        start: jest.fn(), // Mock the start method
+      };
+    }),
+  };
+});
 
 describe("register function", () => {
   it("should register HTTP and Express instrumentations", () => {
@@ -7,24 +19,18 @@ describe("register function", () => {
       instruments: ["http", "express"],
     };
 
-    // Mock or spy on SDK initialization
-    const sdkStartSpy = jest.spyOn(
-      require("@opentelemetry/sdk-node"),
-      "NodeSDK",
-    );
-
+    // Call the register function
     register(config);
 
-    // Verify that NodeSDK was initialized with correct instrumentations
-    expect(sdkStartSpy).toHaveBeenCalledWith(
+    // Verify that NodeSDK was called with correct arguments
+    expect(NodeSDK).toHaveBeenCalledWith(
       expect.objectContaining({
         instrumentations: expect.arrayContaining([
           expect.anything(), // HttpInstrumentation
           expect.anything(), // ExpressInstrumentation
         ]),
+        traceExporter: expect.anything(),
       }),
     );
-
-    sdkStartSpy.mockRestore();
   });
 });
