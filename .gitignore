@@ -128,3 +128,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# TypeScript declaration files
+*.d.ts
+
+# JavaScript files in the tests directory (assuming these are compiled from TypeScript)
+tests/*.js
