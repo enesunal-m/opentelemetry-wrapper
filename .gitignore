@@ -134,3 +134,6 @@ dist
 
 # JavaScript files in the tests directory (assuming these are compiled from TypeScript)
 tests/*.js
+
+# Build output
+dist/
