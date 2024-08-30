@@ -4,11 +4,14 @@ import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { MongoDBInstrumentation } from "@opentelemetry/instrumentation-mongodb";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { CompressionAlgorithm } from "@opentelemetry/otlp-exporter-base";
 
 interface RegisterConfig {
-  endpoint: string;
+  endpoint?: string;
   instruments: string[];
   logLevel?: DiagLogLevel;
+  compression?: "gzip" | "none";
+  exporter?: "otlp";
 }
 
 export function register(config: RegisterConfig): void {
@@ -17,8 +20,17 @@ export function register(config: RegisterConfig): void {
   diag.setLogger(new DiagConsoleLogger(), logLevel);
 
   try {
+    const endpoint =
+      config.endpoint ||
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+      "http://localhost:4317";
+    const compressionInput =
+      config.compression || process.env.OTEL_EXPORTER_OTLP_COMPRESSION;
+    const exporter =
+      config.exporter || (process.env.OTEL_LOGS_EXPORTER as "otlp" | undefined);
+
     // Validate endpoint URL
-    const url = new URL(config.endpoint);
+    const url = new URL(endpoint);
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       throw new Error("Invalid endpoint protocol. Must be http or https.");
     }
@@ -34,8 +46,17 @@ export function register(config: RegisterConfig): void {
       instrumentations.push(new MongoDBInstrumentation());
     }
 
+    // Handle compression
+    let compression: CompressionAlgorithm | undefined;
+    if (compressionInput === "gzip") {
+      compression = CompressionAlgorithm.GZIP;
+    } else if (compressionInput === "none") {
+      compression = undefined;
+    }
+
     const traceExporter = new OTLPTraceExporter({
-      url: config.endpoint,
+      url: endpoint,
+      compression: compression,
     });
 
     const sdk = new NodeSDK({
