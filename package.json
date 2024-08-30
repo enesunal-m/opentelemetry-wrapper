@@ -2,8 +2,8 @@
   "name": "infrastack-interview-fs-meu-20240829",
   "version": "1.2.2",
   "description": "A simple wrapper for OpenTelemetry SDKs",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/enesunal-m/infrastack-interview.git"
