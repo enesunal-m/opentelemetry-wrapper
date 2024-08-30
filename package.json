@@ -9,8 +9,9 @@
     "url": "git+https://github.com/enesunal-m/infrastack-interview.git"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "jest",
+    "build": "tsc -p tsconfig.build.json",
+    "build:tests": "tsc -p tsconfig.json",
+    "test": "npm run build:tests && jest",
     "prepublishOnly": "npm run build"
   },
   "files": [
