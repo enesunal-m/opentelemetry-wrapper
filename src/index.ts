@@ -41,35 +41,48 @@ interface RegisterConfig {
  * ```
  */
 export function register(config: RegisterConfig): void {
-  // Array to hold the selected instrumentations based on the config
-  const instrumentations = [];
+  try {
+    // Validate config
+    if (!config.endpoint) {
+      throw new Error("Endpoint is required in the configuration");
+    }
+    if (!Array.isArray(config.instruments) || config.instruments.length === 0) {
+      throw new Error("At least one instrument must be specified");
+    }
 
-  // Add HTTP instrumentation if 'http' is included in the instruments array
-  if (config.instruments.includes("http")) {
-    instrumentations.push(new HttpInstrumentation());
+    // Array to hold the selected instrumentations based on the config
+    const instrumentations = [];
+
+    // Add HTTP instrumentation if 'http' is included in the instruments array
+    if (config.instruments.includes("http")) {
+      instrumentations.push(new HttpInstrumentation());
+    }
+
+    // Add Express instrumentation if 'express' is included in the instruments array
+    if (config.instruments.includes("express")) {
+      instrumentations.push(new ExpressInstrumentation());
+    }
+
+    // Add MongoDB instrumentation if 'mongodb' is included in the instruments array
+    if (config.instruments.includes("mongodb")) {
+      instrumentations.push(new MongoDBInstrumentation());
+    }
+
+    // Configure the OTLP trace exporter with the provided endpoint
+    const traceExporter = new OTLPTraceExporter({
+      url: `${config.endpoint}/v1/traces`,
+    });
+
+    // Initialize and start the NodeSDK with the configured trace exporter and instrumentations
+    const sdk = new NodeSDK({
+      traceExporter,
+      instrumentations,
+    });
+
+    // Start the OpenTelemetry SDK
+    sdk.start();
+  } catch (error) {
+    console.error("Failed to register OpenTelemetry:", error);
+    throw error; // Re-throw to allow caller to handle
   }
-
-  // Add Express instrumentation if 'express' is included in the instruments array
-  if (config.instruments.includes("express")) {
-    instrumentations.push(new ExpressInstrumentation());
-  }
-
-  // Add MongoDB instrumentation if 'mongodb' is included in the instruments array
-  if (config.instruments.includes("mongodb")) {
-    instrumentations.push(new MongoDBInstrumentation());
-  }
-
-  // Configure the OTLP trace exporter with the provided endpoint
-  const traceExporter = new OTLPTraceExporter({
-    url: `${config.endpoint}/v1/traces`,
-  });
-
-  // Initialize and start the NodeSDK with the configured trace exporter and instrumentations
-  const sdk = new NodeSDK({
-    traceExporter,
-    instrumentations,
-  });
-
-  // Start the OpenTelemetry SDK
-  sdk.start();
 }
