@@ -9,7 +9,7 @@ import { Resource } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 interface RegisterConfig {
-  serviceName: string;
+  serviceName?: string;
   endpoint?: string;
   instruments: string[];
   logLevel?: DiagLogLevel;
@@ -23,6 +23,14 @@ export function register(config: RegisterConfig): void {
   diag.setLogger(new DiagConsoleLogger(), logLevel);
 
   try {
+    const serviceName =
+      config.serviceName || process.env.OTEL_SERVICE_NAME || "unknown-service";
+    if (!config.serviceName && !process.env.OTEL_SERVICE_NAME) {
+      diag.warn(
+        'Service name not provided in config or OTEL_SERVICE_NAME environment variable. Using "unknown-service".',
+      );
+    }
+
     const endpoint =
       config.endpoint ||
       process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
@@ -66,7 +74,7 @@ export function register(config: RegisterConfig): void {
 
     // Create resource with service name and custom attributes
     const resource = new Resource({
-      [ATTR_SERVICE_NAME]: config.serviceName,
+      [ATTR_SERVICE_NAME]: serviceName,
       ...config.customAttributes,
     });
 
@@ -79,7 +87,9 @@ export function register(config: RegisterConfig): void {
 
     // Start the SDK
     sdk.start();
-    diag.info("OpenTelemetry SDK started successfully");
+    diag.info(
+      `OpenTelemetry SDK started successfully for service: ${serviceName}`,
+    );
 
     // Handle process shutdown
     process.on("SIGTERM", () => {
