@@ -5,17 +5,20 @@ import { MongoDBInstrumentation } from "@opentelemetry/instrumentation-mongodb";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
 import { CompressionAlgorithm } from "@opentelemetry/otlp-exporter-base";
+import { Resource } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 interface RegisterConfig {
+  serviceName: string;
   endpoint?: string;
   instruments: string[];
   logLevel?: DiagLogLevel;
   compression?: "gzip" | "none";
   exporter?: "otlp";
+  customAttributes?: Record<string, string>;
 }
 
 export function register(config: RegisterConfig): void {
-  // Set up logging based on the provided log level or default to ERROR
   const logLevel = config.logLevel || DiagLogLevel.ERROR;
   diag.setLogger(new DiagConsoleLogger(), logLevel);
 
@@ -35,6 +38,7 @@ export function register(config: RegisterConfig): void {
       throw new Error("Invalid endpoint protocol. Must be http or https.");
     }
 
+    // Set up instrumentations
     const instrumentations = [];
     if (config.instruments.includes("http")) {
       instrumentations.push(new HttpInstrumentation());
@@ -54,12 +58,21 @@ export function register(config: RegisterConfig): void {
       compression = undefined;
     }
 
+    // Set up exporter
     const traceExporter = new OTLPTraceExporter({
       url: endpoint,
       compression: compression,
     });
 
+    // Create resource with service name and custom attributes
+    const resource = new Resource({
+      [ATTR_SERVICE_NAME]: config.serviceName,
+      ...config.customAttributes,
+    });
+
+    // Initialize SDK
     const sdk = new NodeSDK({
+      resource: resource,
       traceExporter,
       instrumentations,
     });
